@@ -31,15 +31,21 @@
       background-size: 18px 18px;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
       align-items: center;
       justify-content: center;
       padding: 3rem 1.5rem;
     }
 
     .container {
-      background: rgba(255, 255, 255, 0.65);
+      background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(4px);
-      border-radius: 16px;
+      border-radius: 20px;
       padding: 3.5rem 3rem;
       max-width: 520px;
       width: 100%;
@@ -70,8 +76,8 @@
       margin-bottom: 1rem !important;
     }
 
-    #mlb2-36693184 .ml-form-embedBody {
-      padding: 0 !important;
+    #mlb2-36693184 p {
+      margin-bottom: 1.5rem !important;
     }
 
     #mlb2-36693184 .ml-form-fieldRow {
@@ -79,10 +85,11 @@
     }
 
     #mlb2-36693184 input {
-      border-radius: 10px !important;
+      border-radius: 12px !important;
       border: 1px solid rgba(47, 62, 52, 0.25) !important;
-      background: rgba(255,255,255,0.9) !important;
-      padding: 14px 14px !important;
+      background: rgba(255,255,255,0.95) !important;
+      padding: 16px 14px !important;
+      font-size: 0.95rem !important;
     }
 
     #mlb2-36693184 input:focus {
@@ -91,15 +98,16 @@
     }
 
     #mlb2-36693184 .ml-form-embedSubmit {
-      margin-top: 1.5rem !important;
+      margin-top: 1.75rem !important;
     }
 
     #mlb2-36693184 .ml-form-embedSubmit button {
       background-color: var(--dot-green) !important;
-      border-radius: 10px !important;
+      border-radius: 12px !important;
       border: none !important;
       font-weight: 500 !important;
-      padding: 14px !important;
+      padding: 16px !important;
+      font-size: 0.95rem !important;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
@@ -109,12 +117,14 @@
       box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
     }
 
+    /* Footer */
+
     footer {
-      margin-top: 2.5rem;
       text-align: center;
       font-size: 0.8rem;
-      opacity: 0.8;
-      line-height: 1.5;
+      opacity: 0.85;
+      line-height: 1.6;
+      padding: 1.5rem 1rem 2rem;
     }
 
     footer a {
@@ -122,82 +132,122 @@
       text-decoration: underline;
     }
 
+    /* ---- Mobile Optimisation ---- */
+
+    @media (max-width: 600px) {
+      .main {
+        padding: 2rem 1rem;
+        align-items: flex-start;
+      }
+
+      .container {
+        padding: 2.25rem 1.5rem;
+        border-radius: 18px;
+      }
+
+      #mlb2-36693184 h4 {
+        font-size: 1.15rem !important;
+      }
+
+      #mlb2-36693184 p {
+        font-size: 0.9rem !important;
+      }
+
+      #mlb2-36693184 input {
+        padding: 14px !important;
+        font-size: 0.9rem !important;
+      }
+
+      #mlb2-36693184 .ml-form-embedSubmit button {
+        padding: 14px !important;
+        font-size: 0.9rem !important;
+      }
+
+      footer {
+        font-size: 0.75rem;
+        padding-bottom: 1.5rem;
+      }
+    }
+
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <!-- MailerLite Form -->
-    <div id="mlb2-36693184" class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-36693184">
-      <div class="ml-form-align-center">
-        <div class="ml-form-embedWrapper embedForm">
+  <div class="main">
+    <div class="container">
 
-          <div class="ml-form-embedBody ml-form-embedBodyDefault row-form">
+      <!-- MailerLite Form -->
+      <div id="mlb2-36693184" class="ml-form-embedContainer ml-subscribe-form ml-subscribe-form-36693184">
+        <div class="ml-form-align-center">
+          <div class="ml-form-embedWrapper embedForm">
 
-            <div class="ml-form-embedContent">
-              <h4>A weekly summary of birds spotted in your local area</h4>
-              <p>Sent once a week, on Sunday mornings</p>
+            <div class="ml-form-embedBody ml-form-embedBodyDefault row-form">
+
+              <div class="ml-form-embedContent">
+                <h4>A weekly summary of birds spotted in your local area</h4>
+                <p>Sent once a week, on Sunday mornings</p>
+              </div>
+
+              <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/2088491/forms/178489840374908357/subscribe" method="post" target="_blank">
+                <div class="ml-form-formContent">
+
+                  <div class="ml-form-fieldRow">
+                    <div class="ml-field-group ml-field-name">
+                      <input type="text" name="fields[name]" placeholder="First name" autocomplete="given-name">
+                    </div>
+                  </div>
+
+                  <div class="ml-form-fieldRow">
+                    <div class="ml-field-group ml-field-email ml-validate-email ml-validate-required">
+                      <input type="email" name="fields[email]" placeholder="Email" autocomplete="email" required>
+                    </div>
+                  </div>
+
+                  <div class="ml-form-fieldRow ml-last-item">
+                    <div class="ml-field-group ml-field-postcode ml-validate-required">
+                      <input type="text" name="fields[postcode]" placeholder="Postcode" required>
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="ml-form-recaptcha" style="margin: 1.5rem 0; text-align:center;">
+                  <script src="https://www.google.com/recaptcha/api.js"></script>
+                  <div class="g-recaptcha" data-sitekey="6Lf1KHQUAAAAAFNKEX1hdSWCS3mRMv4FlFaNslaD"></div>
+                </div>
+
+                <input type="hidden" name="ml-submit" value="1">
+
+                <div class="ml-form-embedSubmit">
+                  <button type="submit">Sign up</button>
+                </div>
+
+                <input type="hidden" name="anticsrf" value="true">
+              </form>
             </div>
 
-            <form class="ml-block-form" action="https://assets.mailerlite.com/jsonp/2088491/forms/178489840374908357/subscribe" method="post" target="_blank">
-              <div class="ml-form-formContent">
-
-                <div class="ml-form-fieldRow">
-                  <div class="ml-field-group ml-field-name">
-                    <input type="text" name="fields[name]" placeholder="First name" autocomplete="given-name">
-                  </div>
-                </div>
-
-                <div class="ml-form-fieldRow">
-                  <div class="ml-field-group ml-field-email ml-validate-email ml-validate-required">
-                    <input type="email" name="fields[email]" placeholder="Email" autocomplete="email" required>
-                  </div>
-                </div>
-
-                <div class="ml-form-fieldRow ml-last-item">
-                  <div class="ml-field-group ml-field-postcode ml-validate-required">
-                    <input type="text" name="fields[postcode]" placeholder="Postcode" required>
-                  </div>
-                </div>
-
+            <div class="ml-form-successBody row-success" style="display:none">
+              <div class="ml-form-successContent">
+                <h4>Thank you!</h4>
+                <p>Keep an eye out in your inbox for your first note.</p>
               </div>
-
-              <div class="ml-form-recaptcha" style="margin: 1.5rem 0;">
-                <script src="https://www.google.com/recaptcha/api.js"></script>
-                <div class="g-recaptcha" data-sitekey="6Lf1KHQUAAAAAFNKEX1hdSWCS3mRMv4FlFaNslaD"></div>
-              </div>
-
-              <input type="hidden" name="ml-submit" value="1">
-
-              <div class="ml-form-embedSubmit">
-                <button type="submit">Sign up</button>
-              </div>
-
-              <input type="hidden" name="anticsrf" value="true">
-            </form>
-          </div>
-
-          <div class="ml-form-successBody row-success" style="display:none">
-            <div class="ml-form-successContent">
-              <h4>Thank you!</h4>
-              <p>Keep an eye out in your inbox for your first note.</p>
             </div>
-          </div>
 
+          </div>
         </div>
       </div>
+
     </div>
-
-    <footer>
-      <p>
-        Built by Leo 🐦 Bird observation data provided by
-        <a href="https://ebird.org/home" target="_blank" rel="noopener">
-          eBird (Cornell Lab of Ornithology)
-        </a>
-      </p>
-    </footer>
-
   </div>
+
+  <footer>
+    <p>
+      Built by Leo 🐦 Bird observation data provided by
+      <a href="https://ebird.org/home" target="_blank" rel="noopener">
+        eBird (Cornell Lab of Ornithology)
+      </a>
+    </p>
+  </footer>
 
   <script>
     function ml_webform_success_36693184() {
