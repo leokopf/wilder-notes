@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dot Grid Template</title>
+  <title>Wilder Notes - a weekly birding digest</title>
 
   <!-- Roboto Mono Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,20 +33,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem;
+      padding: 3rem 1.5rem;
     }
 
     .container {
-      background: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.65);
       backdrop-filter: blur(4px);
       border-radius: 16px;
-      padding: 3rem;
+      padding: 3.5rem 3rem;
       max-width: 520px;
       width: 100%;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     }
 
-    /* ---- Override MailerLite styles to match theme ---- */
+    /* ---- MailerLite Theme Overrides ---- */
 
     #mlb2-36693184.ml-form-embedContainer,
     #mlb2-36693184 .ml-form-embedWrapper {
@@ -67,17 +67,22 @@
     #mlb2-36693184 h4 {
       font-size: 1.4rem !important;
       font-weight: 500 !important;
-      margin-bottom: 0.75rem !important;
+      margin-bottom: 1rem !important;
     }
 
     #mlb2-36693184 .ml-form-embedBody {
       padding: 0 !important;
     }
 
+    #mlb2-36693184 .ml-form-fieldRow {
+      margin-bottom: 1.25rem !important;
+    }
+
     #mlb2-36693184 input {
-      border-radius: 8px !important;
-      border: 1px solid rgba(47, 62, 52, 0.2) !important;
-      background: rgba(255,255,255,0.8) !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(47, 62, 52, 0.25) !important;
+      background: rgba(255,255,255,0.9) !important;
+      padding: 14px 14px !important;
     }
 
     #mlb2-36693184 input:focus {
@@ -85,11 +90,16 @@
       border-color: var(--dot-green) !important;
     }
 
+    #mlb2-36693184 .ml-form-embedSubmit {
+      margin-top: 1.5rem !important;
+    }
+
     #mlb2-36693184 .ml-form-embedSubmit button {
       background-color: var(--dot-green) !important;
-      border-radius: 8px !important;
+      border-radius: 10px !important;
       border: none !important;
       font-weight: 500 !important;
+      padding: 14px !important;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
@@ -97,6 +107,19 @@
       background-color: #4c7557 !important;
       transform: translateY(-2px);
       box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      opacity: 0.8;
+      line-height: 1.5;
+    }
+
+    footer a {
+      color: var(--dot-green);
+      text-decoration: underline;
     }
 
   </style>
@@ -139,7 +162,7 @@
 
               </div>
 
-              <div class="ml-form-recaptcha" style="margin-bottom:20px;">
+              <div class="ml-form-recaptcha" style="margin: 1.5rem 0;">
                 <script src="https://www.google.com/recaptcha/api.js"></script>
                 <div class="g-recaptcha" data-sitekey="6Lf1KHQUAAAAAFNKEX1hdSWCS3mRMv4FlFaNslaD"></div>
               </div>
@@ -165,6 +188,15 @@
       </div>
     </div>
 
+    <footer>
+      <p>
+        Built by Leo 🐦 Bird observation data provided by
+        <a href="https://ebird.org/home" target="_blank" rel="noopener">
+          eBird (Cornell Lab of Ornithology)
+        </a>
+      </p>
+    </footer>
+
   </div>
 
   <script>
@@ -178,15 +210,6 @@
   <script>
     fetch("https://assets.mailerlite.com/jsonp/2088491/forms/178489840374908357/takel")
   </script>
-
-  <footer style="margin-top:2rem; text-align:center; font-size:0.8rem; opacity:0.8;">
-    <p>
-      Built by Leo 🐦 Bird observation data provided by 
-      <a href="https://ebird.org/home" target="_blank" rel="noopener" style="color: var(--dot-green); text-decoration: underline;">
-        eBird (Cornell Lab of Ornithology)
-      </a>
-    </p>
-  </footer>
 
 </body>
 </html>
