@@ -4,6 +4,100 @@
   <meta charset="UTF-8" />
   <title>Field Notes — Birds Near You</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Body & Font */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto Mono', monospace;
+      background-color: #f5f0e6; /* soft beige */
+      color: #2f4f4f; /* dark greenish for text */
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 50px;
+    }
+
+    /* Dot Grid Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(circle, #c6d8c6 1px, transparent 1px);
+      background-size: 25px 25px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    main {
+      background-color: rgba(255, 255, 255, 0.85);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 90%;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border: 2px solid #c6d8c6;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+      background-color: #2f4f4f;
+      color: #f5f0e6;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #3e665e;
+    }
+
+    #meta {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #556b2f;
+    }
+
+    #results {
+      margin-top: 20px;
+      padding-left: 20px;
+    }
+
+    #results li {
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+  </style>
 </head>
 <body>
 
@@ -25,4 +119,5 @@
   <script src="app.js"></script>
 </body>
 </html>
+
 
