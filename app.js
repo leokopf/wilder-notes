@@ -38,6 +38,7 @@ function makeBirdRow(bird) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.dataset.birdName = bird.name;
+  btn.dataset.sciName = bird.sciName || "";
   btn.style.all = "unset";
   btn.style.cursor = "pointer";
   btn.style.textDecoration = "underline";
@@ -60,24 +61,59 @@ function makeBirdRow(bird) {
   return li;
 }
 
-async function fetchMediaForBird(name) {
+async function fetchMediaForBird(name, sciName) {
   const u = new URL(WORKER_URL);
   u.pathname = "/media";
-  u.searchParams.set("name", name);
-  const res = await fetch(u.toString(), { method: "GET" });
+  const res = await fetch(u.toString(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, sciName }),
+  });
   if (!res.ok) throw new Error(`media http ${res.status}`);
   return res.json();
 }
 
 const mediaCache = new Map();
 
-function renderMedia(panel, media) {
+function renderNoPhoto(panel, media) {
   clear(panel);
 
-  if (!media || !media.ok || !media.thumbnailUrl) {
-    panel.appendChild(makeStatusLine("No photo found."));
+  const row = document.createElement("div");
+  row.style.fontSize = "12px";
+  row.style.opacity = "0.85";
+
+  const msg = document.createElement("span");
+  setText(msg, "No photo found.");
+
+  row.appendChild(msg);
+
+  const searchUrl = media?.searchUrl;
+  if (searchUrl) {
+    const sep = document.createTextNode(" ");
+    row.appendChild(sep);
+
+    const a = document.createElement("a");
+    a.href = searchUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    setText(a, "search");
+    row.appendChild(a);
+  }
+
+  panel.appendChild(row);
+}
+
+function renderMedia(panel, media) {
+  if (!media || !media.ok) {
+    renderNoPhoto(panel, media);
     return;
   }
+  if (!media.thumbnailUrl) {
+    renderNoPhoto(panel, media);
+    return;
+  }
+
+  clear(panel);
 
   const img = document.createElement("img");
   img.src = media.thumbnailUrl;
@@ -99,21 +135,15 @@ function renderMedia(panel, media) {
   if (media.licenseName) parts.push(media.licenseName);
 
   const textSpan = document.createElement("span");
-  setText(textSpan, parts.length ? parts.join(" · ") : "Wikimedia Commons");
-
+  setText(textSpan, parts.length ? parts.join(" · ") : "Wikimedia");
   credit.appendChild(textSpan);
 
   const links = [];
-  if (media.filePageUrl) {
+
+  const sourceUrl = media.filePageUrl || media.pageUrl;
+  if (sourceUrl) {
     const a = document.createElement("a");
-    a.href = media.filePageUrl;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    setText(a, "source");
-    links.push(a);
-  } else if (media.pageUrl) {
-    const a = document.createElement("a");
-    a.href = media.pageUrl;
+    a.href = sourceUrl;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     setText(a, "source");
@@ -126,6 +156,16 @@ function renderMedia(panel, media) {
     a.target = "_blank";
     a.rel = "noopener noreferrer";
     setText(a, "license");
+    links.push(a);
+  }
+
+  // Always include search link as escape hatch
+  if (media.searchUrl) {
+    const a = document.createElement("a");
+    a.href = media.searchUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    setText(a, "search");
     links.push(a);
   }
 
@@ -143,7 +183,9 @@ function renderMedia(panel, media) {
   panel.appendChild(credit);
 }
 
-async function toggleBirdPanel(birdName, panel) {
+async function toggleBirdPanel(birdName, sciName, panel) {
+  const cacheKey = `${birdName}||${sciName || ""}`;
+
   const isOpen = panel.style.display !== "none";
   if (isOpen) {
     panel.style.display = "none";
@@ -154,14 +196,14 @@ async function toggleBirdPanel(birdName, panel) {
   clear(panel);
   panel.appendChild(makeStatusLine("Loading photo…"));
 
-  if (mediaCache.has(birdName)) {
-    renderMedia(panel, mediaCache.get(birdName));
+  if (mediaCache.has(cacheKey)) {
+    renderMedia(panel, mediaCache.get(cacheKey));
     return;
   }
 
   try {
-    const media = await fetchMediaForBird(birdName);
-    mediaCache.set(birdName, media);
+    const media = await fetchMediaForBird(birdName, sciName);
+    mediaCache.set(cacheKey, media);
     renderMedia(panel, media);
   } catch (e) {
     clear(panel);
@@ -187,8 +229,9 @@ async function search() {
     setText(rareMetaEl, "");
     clear(resultsEl);
     clear(rareResultsEl);
-    resultsEl.appendChild(document.createElement("li")).textContent =
-      "Type a town / county / postcode first.";
+    const li = document.createElement("li");
+    setText(li, "Type a town / county / postcode first.");
+    resultsEl.appendChild(li);
     return;
   }
 
@@ -196,8 +239,9 @@ async function search() {
     if (msgEl) setText(msgEl, `Please shorten to ${MAX_QUERY_CHARS} characters`);
     clear(resultsEl);
     clear(rareResultsEl);
-    resultsEl.appendChild(document.createElement("li")).textContent =
-      `Please shorten your location to ${MAX_QUERY_CHARS} characters.`;
+    const li = document.createElement("li");
+    setText(li, `Please shorten your location to ${MAX_QUERY_CHARS} characters.`);
+    resultsEl.appendChild(li);
     return;
   }
 
@@ -207,7 +251,10 @@ async function search() {
   setText(rareMetaEl, "");
   clear(resultsEl);
   clear(rareResultsEl);
-  resultsEl.appendChild(document.createElement("li")).textContent = "Loading…";
+
+  const loadingLi = document.createElement("li");
+  setText(loadingLi, "Loading…");
+  resultsEl.appendChild(loadingLi);
 
   try {
     const res = await fetch(WORKER_URL, {
@@ -220,8 +267,9 @@ async function search() {
       const text = await res.text().catch(() => "");
       clear(resultsEl);
       clear(rareResultsEl);
-      resultsEl.appendChild(document.createElement("li")).textContent =
-        `Worker error (${res.status}). ${text ? "Response: " + text : ""}`;
+      const li = document.createElement("li");
+      setText(li, `Worker error (${res.status}). ${text ? "Response: " + text : ""}`);
+      resultsEl.appendChild(li);
       return;
     }
 
@@ -231,7 +279,9 @@ async function search() {
     const popular = Array.isArray(data.popular) ? data.popular : [];
     clear(resultsEl);
     if (popular.length === 0) {
-      resultsEl.appendChild(document.createElement("li")).textContent = "No results found.";
+      const li = document.createElement("li");
+      setText(li, "No results found.");
+      resultsEl.appendChild(li);
     } else {
       popular.forEach((bird) => resultsEl.appendChild(makeBirdRow(bird)));
     }
@@ -247,8 +297,9 @@ async function search() {
   } catch (err) {
     clear(resultsEl);
     clear(rareResultsEl);
-    resultsEl.appendChild(document.createElement("li")).textContent =
-      "Request failed. Check DevTools → Console/Network.";
+    const li = document.createElement("li");
+    setText(li, "Request failed. Check DevTools → Console/Network.");
+    resultsEl.appendChild(li);
   } finally {
     searchBtn.disabled = false;
     setText(searchBtn, "Search");
@@ -269,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btn) btn.addEventListener("click", search);
 
-  // Event delegation for bird clicks
   document.addEventListener("click", (e) => {
     const t = e.target;
     if (!(t instanceof HTMLElement)) return;
@@ -277,13 +327,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const birdBtn = t.closest("button[data-bird-name]");
     if (!birdBtn) return;
 
-    const birdName = birdBtn.dataset.birdName;
+    const birdName = birdBtn.dataset.birdName || "";
+    const sciName = birdBtn.dataset.sciName || "";
     const li = birdBtn.closest("li");
     if (!birdName || !li) return;
 
     const panel = li.querySelector("div[data-panel-for]");
     if (!panel) return;
 
-    toggleBirdPanel(birdName, panel);
+    toggleBirdPanel(birdName, sciName, panel);
   });
 });
