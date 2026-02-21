@@ -14,10 +14,16 @@
     <label for="location">Location</label><br />
     <input
       id="location"
-      placeholder="Town, county or postcode"
+      placeholder="Town, county, postcode, or coordinates"
       autocomplete="off"
+      maxlength="50"
     />
     <button id="searchBtn" type="button">Search</button>
+
+    <div style="margin-top: 6px; font-size: 12px; opacity: 0.85;">
+      <span id="charCount">0/50</span>
+      <span id="charMsg" style="margin-left: 10px;"></span>
+    </div>
 
     <p id="meta"></p>
 
