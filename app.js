@@ -1,27 +1,31 @@
 const WORKER_URL = "https://solitary-resonance-e0f8.lkopferschmitt-e89.workers.dev/";
 
-let currentResults = [];
-
 async function search() {
   const locationEl = document.getElementById("location");
   const resultsEl = document.getElementById("results");
+  const rareResultsEl = document.getElementById("rareResults");
   const metaEl = document.getElementById("meta");
+  const rareMetaEl = document.getElementById("rareMeta");
 
   // Safety checks so it never fails silently
-  if (!locationEl || !resultsEl || !metaEl) {
-    console.error("Missing expected elements on the page (location/results/meta).");
+  if (!locationEl || !resultsEl || !rareResultsEl || !metaEl || !rareMetaEl) {
+    console.error("Missing expected elements on the page (location/results/rareResults/meta/rareMeta).");
     return;
   }
 
   const query = locationEl.value.trim();
   if (!query) {
     metaEl.textContent = "";
+    rareMetaEl.textContent = "";
     resultsEl.innerHTML = "<li>Type a town / county / postcode first.</li>";
+    rareResultsEl.innerHTML = "";
     return;
   }
 
   metaEl.textContent = "";
+  rareMetaEl.textContent = "";
   resultsEl.innerHTML = "<li>Loading…</li>";
+  rareResultsEl.innerHTML = "";
 
   try {
     const res = await fetch(WORKER_URL, {
@@ -33,6 +37,7 @@ async function search() {
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       resultsEl.innerHTML = `<li>Worker error (${res.status}). ${text ? "Response: " + text : ""}</li>`;
+      rareResultsEl.innerHTML = "";
       return;
     }
 
@@ -40,32 +45,38 @@ async function search() {
 
     metaEl.textContent = `Within ${data.radiusMiles} miles of ${data.location} · last ${data.days} days`;
 
-    // data.results should be [{ name, count, reports? }, ...]
-    currentResults = Array.isArray(data.results) ? data.results : [];
+    // --- Most seen ---
+    const popular = Array.isArray(data.popular) ? data.popular : [];
+    resultsEl.innerHTML = "";
+    if (popular.length === 0) {
+      resultsEl.innerHTML = "<li>No results found.</li>";
+    } else {
+      popular.forEach((bird) => {
+        const li = document.createElement("li");
+        li.textContent = `${bird.name} — ${bird.count} seen`;
+        resultsEl.appendChild(li);
+      });
+    }
 
-    renderResults();
+    // --- Unusual (eBird notable) ---
+    const unusual = Array.isArray(data.unusual) ? data.unusual : [];
+    rareResultsEl.innerHTML = "";
+
+    if (unusual.length === 0) {
+      rareMetaEl.textContent = "No notable (locally unusual) species reported in this time window.";
+      return;
+    }
+
+    rareMetaEl.textContent = "Locally unusual sightings (eBird notable).";
+
+    unusual.forEach((bird) => {
+      const li = document.createElement("li");
+      li.textContent = `${bird.name} — ${bird.count} seen`;
+      rareResultsEl.appendChild(li);
+    });
   } catch (err) {
     console.error(err);
     resultsEl.innerHTML = "<li>Request failed. Check DevTools → Console/Network.</li>";
+    rareResultsEl.innerHTML = "";
   }
-}
-
-function renderResults() {
-  const resultsEl = document.getElementById("results");
-
-  if (!currentResults.length) {
-    resultsEl.innerHTML = "<li>No results found.</li>";
-    return;
-  }
-
-  // Sort by total individuals seen (highest first)
-  const sorted = [...currentResults].sort((a, b) => (b.count || 0) - (a.count || 0));
-
-  resultsEl.innerHTML = "";
-
-  sorted.slice(0, 20).forEach((bird) => {
-    const li = document.createElement("li");
-    li.textContent = `${bird.name} — ${bird.count} seen`;
-    resultsEl.appendChild(li);
-  });
 }
