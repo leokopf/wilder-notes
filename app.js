@@ -1,8 +1,23 @@
 const WORKER_URL = "https://solitary-resonance-e0f8.lkopferschmitt-e89.workers.dev/";
-const REQUEST_TIMEOUT_MS = 12000;
+const MAX_QUERY_CHARS = 50;
 
 function $(id) {
   return document.getElementById(id);
+}
+
+function setCharUI(value) {
+  const countEl = $("charCount");
+  const msgEl = $("charMsg");
+  if (!countEl || !msgEl) return;
+
+  const len = value.length;
+  countEl.textContent = `${len}/${MAX_QUERY_CHARS}`;
+
+  if (len >= MAX_QUERY_CHARS) {
+    msgEl.textContent = `Max ${MAX_QUERY_CHARS} characters reached`;
+  } else {
+    msgEl.textContent = "";
+  }
 }
 
 async function search() {
@@ -12,15 +27,17 @@ async function search() {
   const metaEl = $("meta");
   const rareMetaEl = $("rareMeta");
   const searchBtn = $("searchBtn");
+  const msgEl = $("charMsg");
 
   if (!locationEl || !resultsEl || !rareResultsEl || !metaEl || !rareMetaEl || !searchBtn) {
     console.error("Missing expected elements on the page.");
     return;
   }
 
-  const query = locationEl.value.trim();
+  const raw = locationEl.value ?? "";
+  const query = raw.trim();
 
-  // Light client-side validation (real protection should be in the Worker too)
+  // Empty
   if (!query) {
     metaEl.textContent = "";
     rareMetaEl.textContent = "";
@@ -28,13 +45,16 @@ async function search() {
     rareResultsEl.innerHTML = "";
     return;
   }
-  if (query.length > 80) {
-    resultsEl.innerHTML = "<li>Please use a shorter location (max 80 characters).</li>";
+
+  // Length guard (server also enforces)
+  if (query.length > MAX_QUERY_CHARS) {
+    if (msgEl) msgEl.textContent = `Please shorten to ${MAX_QUERY_CHARS} characters`;
+    resultsEl.innerHTML = `<li>Please shorten your location to ${MAX_QUERY_CHARS} characters.</li>`;
     rareResultsEl.innerHTML = "";
     return;
   }
 
-  // UI loading state
+  // Loading UI
   searchBtn.disabled = true;
   searchBtn.textContent = "Searching…";
   metaEl.textContent = "";
@@ -42,15 +62,11 @@ async function search() {
   resultsEl.innerHTML = "<li>Loading…</li>";
   rareResultsEl.innerHTML = "";
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
   try {
     const res = await fetch(WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
-      signal: controller.signal,
     });
 
     if (!res.ok) {
@@ -77,43 +93,43 @@ async function search() {
       });
     }
 
-    // Unusual
+    // Unusual (eBird notable)
     const unusual = Array.isArray(data.unusual) ? data.unusual : [];
     rareResultsEl.innerHTML = "";
 
     if (unusual.length === 0) {
       rareMetaEl.textContent = "No notable (locally unusual) species reported in this time window.";
-    } else {
-      rareMetaEl.textContent = "Locally unusual sightings (eBird notable).";
-      unusual.forEach((bird) => {
-        const li = document.createElement("li");
-        li.textContent = `${bird.name} — ${bird.count} seen`;
-        rareResultsEl.appendChild(li);
-      });
+      return;
     }
+
+    rareMetaEl.textContent = "Locally unusual sightings (eBird notable).";
+    unusual.forEach((bird) => {
+      const li = document.createElement("li");
+      li.textContent = `${bird.name} — ${bird.count} seen`;
+      rareResultsEl.appendChild(li);
+    });
   } catch (err) {
     console.error(err);
-    const msg = err?.name === "AbortError"
-      ? "Request timed out. Try again."
-      : "Request failed. Check DevTools → Console/Network.";
-    resultsEl.innerHTML = `<li>${msg}</li>`;
+    resultsEl.innerHTML = "<li>Request failed. Check DevTools → Console/Network.</li>";
     rareResultsEl.innerHTML = "";
   } finally {
-    clearTimeout(timer);
     searchBtn.disabled = false;
     searchBtn.textContent = "Search";
   }
 }
 
-// Wire up events (no inline scripts)
+// Wire up listeners (no inline script needed)
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = $("searchBtn");
   const input = $("location");
+  const btn = $("searchBtn");
 
-  if (btn) btn.addEventListener("click", search);
   if (input) {
+    setCharUI(input.value || "");
+    input.addEventListener("input", () => setCharUI(input.value || ""));
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") search();
     });
   }
+
+  if (btn) btn.addEventListener("click", search);
 });
