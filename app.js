@@ -7,9 +7,8 @@ async function search() {
   const metaEl = document.getElementById("meta");
   const rareMetaEl = document.getElementById("rareMeta");
 
-  // Safety checks so it never fails silently
   if (!locationEl || !resultsEl || !rareResultsEl || !metaEl || !rareMetaEl) {
-    console.error("Missing expected elements on the page (location/results/rareResults/meta/rareMeta).");
+    console.error("Missing expected elements on the page.");
     return;
   }
 
@@ -45,7 +44,7 @@ async function search() {
 
     metaEl.textContent = `Within ${data.radiusMiles} miles of ${data.location} · last ${data.days} days`;
 
-    // --- Most seen ---
+    // Most seen
     const popular = Array.isArray(data.popular) ? data.popular : [];
     resultsEl.innerHTML = "";
     if (popular.length === 0) {
@@ -58,7 +57,7 @@ async function search() {
       });
     }
 
-    // --- Unusual (eBird notable) ---
+    // Unusual (eBird notable)
     const unusual = Array.isArray(data.unusual) ? data.unusual : [];
     rareResultsEl.innerHTML = "";
 
@@ -68,7 +67,6 @@ async function search() {
     }
 
     rareMetaEl.textContent = "Locally unusual sightings (eBird notable).";
-
     unusual.forEach((bird) => {
       const li = document.createElement("li");
       li.textContent = `${bird.name} — ${bird.count} seen`;
