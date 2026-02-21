@@ -6,12 +6,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
+
   <main>
     <h1>Field Notes</h1>
     <p>Recent bird sightings near you</p>
 
-    <input id="location" placeholder="Town, county or postcode" autocomplete="off" />
+    <input
+      id="location"
+      placeholder="Town, county or postcode"
+      autocomplete="off"
+    />
     <button id="searchBtn">Search</button>
+
+    <!-- NEW: sort toggle -->
+    <div style="margin: 12px 0;">
+      <label>
+        <input type="radio" name="sortMode" value="count" checked />
+        Most birds seen
+      </label>
+
+      <label style="margin-left: 20px;">
+        <input type="radio" name="sortMode" value="reports" />
+        Most reported
+      </label>
+    </div>
 
     <p id="meta"></p>
     <ul id="results"></ul>
