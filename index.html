@@ -11,12 +11,13 @@
     <h1>Wilder Notes</h1>
     <p>Recent bird sightings near you</p>
 
+    <label for="location">Location</label><br />
     <input
       id="location"
       placeholder="Town, county or postcode"
       autocomplete="off"
     />
-    <button id="searchBtn">Search</button>
+    <button id="searchBtn" type="button">Search</button>
 
     <p id="meta"></p>
 
@@ -41,11 +42,5 @@
   </main>
 
   <script src="app.js"></script>
-  <script>
-    document.getElementById("searchBtn").addEventListener("click", search);
-    document.getElementById("location").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") search();
-    });
-  </script>
 </body>
 </html>
