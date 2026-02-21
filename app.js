@@ -5,15 +5,30 @@ function $(id) {
   return document.getElementById(id);
 }
 
+function setText(el, text) {
+  el.textContent = text;
+}
+
+function clear(el) {
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
 function setCharUI(value) {
   const countEl = $("charCount");
   const msgEl = $("charMsg");
   if (!countEl || !msgEl) return;
 
   const len = value.length;
-  countEl.textContent = `${len}/${MAX_QUERY_CHARS}`;
+  setText(countEl, `${len}/${MAX_QUERY_CHARS}`);
+  setText(msgEl, len >= MAX_QUERY_CHARS ? `Max ${MAX_QUERY_CHARS} characters reached` : "");
+}
 
-  msgEl.textContent = len >= MAX_QUERY_CHARS ? `Max ${MAX_QUERY_CHARS} characters reached` : "";
+function makeStatusLine(text) {
+  const div = document.createElement("div");
+  div.style.fontSize = "12px";
+  div.style.opacity = "0.85";
+  setText(div, text);
+  return div;
 }
 
 function makeBirdRow(bird) {
@@ -26,10 +41,10 @@ function makeBirdRow(bird) {
   btn.style.all = "unset";
   btn.style.cursor = "pointer";
   btn.style.textDecoration = "underline";
-  btn.textContent = bird.name;
+  setText(btn, bird.name);
 
   const count = document.createElement("span");
-  count.textContent = ` — ${bird.count} seen`;
+  setText(count, ` — ${bird.count} seen`);
 
   const panel = document.createElement("div");
   panel.dataset.panelFor = bird.name;
@@ -42,24 +57,27 @@ function makeBirdRow(bird) {
   li.appendChild(btn);
   li.appendChild(count);
   li.appendChild(panel);
-
   return li;
 }
 
-function setPanelLoading(panel) {
-  panel.innerHTML = `<div style="font-size: 12px; opacity: 0.85;">Loading photo…</div>`;
+async function fetchMediaForBird(name) {
+  const u = new URL(WORKER_URL);
+  u.pathname = "/media";
+  u.searchParams.set("name", name);
+  const res = await fetch(u.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`media http ${res.status}`);
+  return res.json();
 }
 
-function setPanelNoImage(panel) {
-  panel.innerHTML = `<div style="font-size: 12px; opacity: 0.85;">No photo found.</div>`;
-}
+const mediaCache = new Map();
 
-function setPanelError(panel) {
-  panel.innerHTML = `<div style="font-size: 12px; opacity: 0.85;">Couldn’t load photo.</div>`;
-}
+function renderMedia(panel, media) {
+  clear(panel);
 
-function setPanelImage(panel, media) {
-  panel.innerHTML = "";
+  if (!media || !media.ok || !media.thumbnailUrl) {
+    panel.appendChild(makeStatusLine("No photo found."));
+    return;
+  }
 
   const img = document.createElement("img");
   img.src = media.thumbnailUrl;
@@ -76,33 +94,29 @@ function setPanelImage(panel, media) {
   credit.style.opacity = "0.75";
   credit.style.lineHeight = "1.25";
 
-  // Keep this minimal but compliant: credit + license + links (when available).
   const parts = [];
-
   if (media.creditText) parts.push(media.creditText);
   if (media.licenseName) parts.push(media.licenseName);
 
   const textSpan = document.createElement("span");
-  textSpan.textContent = parts.length ? parts.join(" · ") : "Wikimedia Commons";
+  setText(textSpan, parts.length ? parts.join(" · ") : "Wikimedia Commons");
 
-  const linkWrap = document.createElement("span");
-  linkWrap.style.marginLeft = "6px";
+  credit.appendChild(textSpan);
 
   const links = [];
-
   if (media.filePageUrl) {
     const a = document.createElement("a");
     a.href = media.filePageUrl;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.textContent = "source";
+    setText(a, "source");
     links.push(a);
   } else if (media.pageUrl) {
     const a = document.createElement("a");
     a.href = media.pageUrl;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.textContent = "source";
+    setText(a, "source");
     links.push(a);
   }
 
@@ -111,32 +125,23 @@ function setPanelImage(panel, media) {
     a.href = media.licenseUrl;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
-    a.textContent = "license";
+    setText(a, "license");
     links.push(a);
   }
 
-  links.forEach((a, i) => {
-    if (i > 0) linkWrap.appendChild(document.createTextNode(" · "));
-    linkWrap.appendChild(a);
-  });
-
-  credit.appendChild(textSpan);
-  if (links.length) credit.appendChild(linkWrap);
+  if (links.length) {
+    const linkWrap = document.createElement("span");
+    linkWrap.style.marginLeft = "6px";
+    links.forEach((a, i) => {
+      if (i > 0) linkWrap.appendChild(document.createTextNode(" · "));
+      linkWrap.appendChild(a);
+    });
+    credit.appendChild(linkWrap);
+  }
 
   panel.appendChild(img);
   panel.appendChild(credit);
 }
-
-async function fetchMediaForBird(name) {
-  const u = new URL(WORKER_URL);
-  u.pathname = "/media";
-  u.searchParams.set("name", name);
-  const res = await fetch(u.toString(), { method: "GET" });
-  if (!res.ok) throw new Error("media http " + res.status);
-  return res.json();
-}
-
-const mediaCache = new Map();
 
 async function toggleBirdPanel(birdName, panel) {
   const isOpen = panel.style.display !== "none";
@@ -146,24 +151,21 @@ async function toggleBirdPanel(birdName, panel) {
   }
 
   panel.style.display = "block";
+  clear(panel);
+  panel.appendChild(makeStatusLine("Loading photo…"));
 
   if (mediaCache.has(birdName)) {
-    const cached = mediaCache.get(birdName);
-    if (cached?.ok && cached.thumbnailUrl) setPanelImage(panel, cached);
-    else setPanelNoImage(panel);
+    renderMedia(panel, mediaCache.get(birdName));
     return;
   }
-
-  setPanelLoading(panel);
 
   try {
     const media = await fetchMediaForBird(birdName);
     mediaCache.set(birdName, media);
-
-    if (media?.ok && media.thumbnailUrl) setPanelImage(panel, media);
-    else setPanelNoImage(panel);
+    renderMedia(panel, media);
   } catch (e) {
-    setPanelError(panel);
+    clear(panel);
+    panel.appendChild(makeStatusLine("Couldn’t load photo."));
   }
 }
 
@@ -176,35 +178,36 @@ async function search() {
   const searchBtn = $("searchBtn");
   const msgEl = $("charMsg");
 
-  if (!locationEl || !resultsEl || !rareResultsEl || !metaEl || !rareMetaEl || !searchBtn) {
-    console.error("Missing expected elements on the page.");
-    return;
-  }
+  if (!locationEl || !resultsEl || !rareResultsEl || !metaEl || !rareMetaEl || !searchBtn) return;
 
-  const raw = locationEl.value ?? "";
-  const query = raw.trim();
+  const query = (locationEl.value || "").trim();
 
   if (!query) {
-    metaEl.textContent = "";
-    rareMetaEl.textContent = "";
-    resultsEl.innerHTML = "<li>Type a town / county / postcode first.</li>";
-    rareResultsEl.innerHTML = "";
+    setText(metaEl, "");
+    setText(rareMetaEl, "");
+    clear(resultsEl);
+    clear(rareResultsEl);
+    resultsEl.appendChild(document.createElement("li")).textContent =
+      "Type a town / county / postcode first.";
     return;
   }
 
   if (query.length > MAX_QUERY_CHARS) {
-    if (msgEl) msgEl.textContent = `Please shorten to ${MAX_QUERY_CHARS} characters`;
-    resultsEl.innerHTML = `<li>Please shorten your location to ${MAX_QUERY_CHARS} characters.</li>`;
-    rareResultsEl.innerHTML = "";
+    if (msgEl) setText(msgEl, `Please shorten to ${MAX_QUERY_CHARS} characters`);
+    clear(resultsEl);
+    clear(rareResultsEl);
+    resultsEl.appendChild(document.createElement("li")).textContent =
+      `Please shorten your location to ${MAX_QUERY_CHARS} characters.`;
     return;
   }
 
   searchBtn.disabled = true;
-  searchBtn.textContent = "Searching…";
-  metaEl.textContent = "";
-  rareMetaEl.textContent = "";
-  resultsEl.innerHTML = "<li>Loading…</li>";
-  rareResultsEl.innerHTML = "";
+  setText(searchBtn, "Searching…");
+  setText(metaEl, "");
+  setText(rareMetaEl, "");
+  clear(resultsEl);
+  clear(rareResultsEl);
+  resultsEl.appendChild(document.createElement("li")).textContent = "Loading…";
 
   try {
     const res = await fetch(WORKER_URL, {
@@ -215,42 +218,40 @@ async function search() {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      resultsEl.innerHTML = `<li>Worker error (${res.status}). ${text ? "Response: " + text : ""}</li>`;
-      rareResultsEl.innerHTML = "";
+      clear(resultsEl);
+      clear(rareResultsEl);
+      resultsEl.appendChild(document.createElement("li")).textContent =
+        `Worker error (${res.status}). ${text ? "Response: " + text : ""}`;
       return;
     }
 
     const data = await res.json();
+    setText(metaEl, `Within ${data.radiusMiles} miles of ${data.location} · last ${data.days} days`);
 
-    metaEl.textContent = `Within ${data.radiusMiles} miles of ${data.location} · last ${data.days} days`;
-
-    // Most seen
     const popular = Array.isArray(data.popular) ? data.popular : [];
-    resultsEl.innerHTML = "";
+    clear(resultsEl);
     if (popular.length === 0) {
-      resultsEl.innerHTML = "<li>No results found.</li>";
+      resultsEl.appendChild(document.createElement("li")).textContent = "No results found.";
     } else {
       popular.forEach((bird) => resultsEl.appendChild(makeBirdRow(bird)));
     }
 
-    // Unusual
     const unusual = Array.isArray(data.unusual) ? data.unusual : [];
-    rareResultsEl.innerHTML = "";
-
+    clear(rareResultsEl);
     if (unusual.length === 0) {
-      rareMetaEl.textContent = "No notable (locally unusual) species reported in this time window.";
-      return;
+      setText(rareMetaEl, "No notable (locally unusual) species reported in this time window.");
+    } else {
+      setText(rareMetaEl, "Locally unusual sightings (eBird notable).");
+      unusual.forEach((bird) => rareResultsEl.appendChild(makeBirdRow(bird)));
     }
-
-    rareMetaEl.textContent = "Locally unusual sightings (eBird notable).";
-    unusual.forEach((bird) => rareResultsEl.appendChild(makeBirdRow(bird)));
   } catch (err) {
-    console.error(err);
-    resultsEl.innerHTML = "<li>Request failed. Check DevTools → Console/Network.</li>";
-    rareResultsEl.innerHTML = "";
+    clear(resultsEl);
+    clear(rareResultsEl);
+    resultsEl.appendChild(document.createElement("li")).textContent =
+      "Request failed. Check DevTools → Console/Network.";
   } finally {
     searchBtn.disabled = false;
-    searchBtn.textContent = "Search";
+    setText(searchBtn, "Search");
   }
 }
 
@@ -268,16 +269,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btn) btn.addEventListener("click", search);
 
-  // Event delegation: click any bird name button in either list
+  // Event delegation for bird clicks
   document.addEventListener("click", (e) => {
     const t = e.target;
     if (!(t instanceof HTMLElement)) return;
 
-    const btn = t.closest("button[data-bird-name]");
-    if (!btn) return;
+    const birdBtn = t.closest("button[data-bird-name]");
+    if (!birdBtn) return;
 
-    const birdName = btn.dataset.birdName;
-    const li = btn.closest("li");
+    const birdName = birdBtn.dataset.birdName;
+    const li = birdBtn.closest("li");
     if (!birdName || !li) return;
 
     const panel = li.querySelector("div[data-panel-for]");
