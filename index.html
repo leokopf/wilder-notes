@@ -4,43 +4,281 @@
   <meta charset="UTF-8" />
   <title>Wilder Notes — Birds Near You</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
+
+  <!-- Fonts: Serif for headings, Sans for body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500,650&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --paper:#fbf4e6;
+      --ink:#24211e;
+      --muted:#5d564e;
+
+      /* Notebook rules */
+      --rule: rgba(70,110,150,.16);
+      --margin: rgba(190,70,70,.35);
+
+      /* UI */
+      --accent:#2f6f67;         /* muted teal */
+      --card: rgba(255,255,255,.35);
+      --border: rgba(36,33,30,.14);
+      --border-strong: rgba(36,33,30,.20);
+      --shadow: 0 18px 45px rgba(0,0,0,.12);
+      --radius: 20px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      color:var(--ink);
+      background:
+        /* Red margin line */
+        linear-gradient(90deg, transparent 0 68px, var(--margin) 68px 70px, transparent 70px),
+        /* Blue grid dots */
+        radial-gradient(circle at 1px 1px, var(--rule) 1px, transparent 1px) 0 0/18px 18px,
+        /* Paper */
+        linear-gradient(var(--paper), var(--paper));
+      min-height:100vh;
+      padding: 30px 16px;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    main{
+      max-width: 920px;
+      margin: 0 auto;
+      background: rgba(251,244,230,.92);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 26px 22px;
+      overflow: hidden;
+    }
+
+    header{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:16px;
+      border-bottom: 1px dashed rgba(36,33,30,.22);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+    }
+
+    h1{
+      margin:0;
+      font-family: Fraunces, Georgia, "Times New Roman", serif;
+      font-size: 32px;
+      letter-spacing: .2px;
+    }
+
+    .stamp{
+      font-size: 12px;
+      color: rgba(36,33,30,.78);
+      border: 1px solid rgba(36,33,30,.22);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(255,255,255,.30);
+      white-space: nowrap;
+    }
+
+    p{
+      margin: 10px 0;
+      color: var(--muted);
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin: 14px 0 6px;
+    }
+
+    label{
+      display:block;
+      font-size: 12px;
+      color: rgba(36,33,30,.70);
+      margin-bottom: 6px;
+    }
+
+    input{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.55);
+      color: var(--ink);
+      outline: none;
+      font-size: 14px;
+    }
+
+    input:focus{
+      border-color: rgba(47,111,103,.55);
+      box-shadow: 0 0 0 4px rgba(47,111,103,.14);
+    }
+
+    button{
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(47,111,103,.16);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    button:hover{ background: rgba(47,111,103,.22); }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
+
+    .smallrow{
+      display:flex;
+      gap:10px;
+      font-size: 12px;
+      color: rgba(36,33,30,.70);
+      margin: 2px 0 10px;
+    }
+
+    #meta{
+      margin-top: 8px;
+      padding: 10px 12px;
+      border: 1px solid rgba(36,33,30,.10);
+      border-radius: 14px;
+      background: rgba(255,255,255,.26);
+      color: rgba(36,33,30,.75);
+    }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 760px){
+      .split{ grid-template-columns: 1fr; }
+      .controls{ grid-template-columns: 1fr; }
+      header{ flex-direction: column; align-items:flex-start; }
+    }
+
+    section{
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--card);
+      padding: 14px 14px 10px;
+    }
+
+    h2{
+      margin: 0 0 10px;
+      font-family: Fraunces, Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      letter-spacing: .3px;
+      color: var(--ink);
+    }
+
+    .hint{
+      margin-top: -6px;
+      font-size: 12px;
+      color: rgba(36,33,30,.68);
+    }
+
+    ul{
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    li{
+      margin: 8px 0;
+      color: rgba(36,33,30,.88);
+    }
+
+    /* Make the clickable bird name look like a tidy notebook underline, without motion */
+    li button[data-bird-name]{
+      font-family: inherit;
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    /* Photo panel (your JS injects a div inside li) */
+    li div[data-panel-for]{
+      background: rgba(255,255,255,.45);
+      border: 1px solid rgba(36,33,30,.14);
+      border-radius: 14px;
+    }
+
+    footer{
+      margin-top: 18px;
+      font-size: 12px;
+      color: rgba(36,33,30,.70);
+      border-top: 1px dashed rgba(36,33,30,.22);
+      padding-top: 14px;
+    }
+
+    a{
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+  </style>
 </head>
+
 <body>
   <main>
-    <h1>Wilder Notes</h1>
-    <p>Recent bird sightings near you</p>
+    <header>
+      <h1>Wilder Notes</h1>
+      <div class="stamp">Field notebook · birds near you</div>
+    </header>
 
-    <label for="location">Location</label><br />
-    <input
-      id="location"
-      placeholder="Town, county, postcode, or coordinates"
-      autocomplete="off"
-      maxlength="50"
-    />
-    <button id="searchBtn" type="button">Search</button>
+    <p>Recent bird sightings near you. Click a bird for a photo.</p>
 
-    <div style="margin-top: 6px; font-size: 12px; opacity: 0.85;">
+    <div class="controls">
+      <div>
+        <label for="location">Location</label>
+        <input
+          id="location"
+          placeholder="Town, county, postcode, or coordinates"
+          autocomplete="off"
+          maxlength="50"
+        />
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button id="searchBtn" type="button" style="width:100%;">Search</button>
+      </div>
+    </div>
+
+    <div class="smallrow">
       <span id="charCount">0/50</span>
-      <span id="charMsg" style="margin-left: 10px;"></span>
+      <span id="charMsg"></span>
     </div>
 
     <p id="meta"></p>
 
-    <h2>Most seen</h2>
-    <p style="margin-top: -8px; font-size: 12px; opacity: 0.85;">Tip: click a bird for a photo.</p>
-    <ul id="results"></ul>
+    <div class="split">
+      <section>
+        <h2>Most seen</h2>
+        <p class="hint">Sorted by total birds seen in the last 7 days.</p>
+        <ul id="results"></ul>
+      </section>
 
-    <h2>Unusual</h2>
-    <p id="rareMeta"></p>
-    <ul id="rareResults"></ul>
+      <section>
+        <h2>Unusual</h2>
+        <p id="rareMeta" class="hint"></p>
+        <ul id="rareResults"></ul>
+      </section>
+    </div>
 
-    <footer style="margin-top: 24px; font-size: 12px; opacity: 0.85;">
+    <footer>
       <p>
         Bird observations and notable sightings: © eBird / Cornell Lab of Ornithology.
         Geocoding: © OpenStreetMap contributors (Nominatim).
-      </p>
-      <p>
-        Photos: Wikipedia/Wikimedia Commons (credit + license shown per image).
+        Photos: Wikipedia/Wikimedia Commons.
       </p>
       <p>
         <a href="https://ebird.org" target="_blank" rel="noopener noreferrer">eBird</a>
