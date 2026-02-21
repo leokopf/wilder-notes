@@ -49,7 +49,7 @@ async function search() {
 
     data.results.forEach((bird) => {
       const li = document.createElement("li");
-      li.textContent = `${bird.name} — ${bird.count} sightings`;
+      li.textContent = `${bird.name} — ${bird.count} seen (${bird.reports} reports)`;
       resultsEl.appendChild(li);
     });
   } catch (err) {
