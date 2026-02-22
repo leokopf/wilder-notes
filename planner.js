@@ -2,21 +2,21 @@ const form = document.getElementById("plannerForm");
 const statusEl = document.getElementById("status");
 const resultsCard = document.getElementById("resultsCard");
 const summaryEl = document.getElementById("summary");
-const monthBarsEl = document.getElementById("monthBars");
+const birdListEl = document.getElementById("birdList");
 const dataNoteEl = document.getElementById("dataNote");
 const explainEl = document.getElementById("explain");
-const monthDetailSection = document.getElementById("monthDetailSection");
-const monthDetailEl = document.getElementById("monthDetail");
 
 const goBtn = document.getElementById("goBtn");
 const exampleBtn = document.getElementById("exampleBtn");
 
 const MONTH_NAMES = ["", "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+// IMPORTANT: this is your worker URL (works even if domain routing isn’t ready)
+const API_PLANNER = "https://solitary-resonance-e0f8.lkopferschmitt-e89.workers.dev/api/planner";
+
 exampleBtn.addEventListener("click", () => {
-  document.getElementById("location").value = "Stonehaven";
-  document.getElementById("bird").value = "Puffin";
-  document.getElementById("month").value = "";
+  document.getElementById("location").value = "Thurso";
+  document.getElementById("month").value = "3";
   statusEl.textContent = "";
   resultsCard.hidden = true;
 });
@@ -25,13 +25,11 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const location = (document.getElementById("location").value || "").trim();
-  const bird = (document.getElementById("bird").value || "").trim();
-  const month = (document.getElementById("month").value || "").trim(); // "" or "1".."12"
+  const monthStr = (document.getElementById("month").value || "").trim();
+  const month = monthStr ? Number(monthStr) : null;
 
-  // Require at least 2 of 3: location, bird, month
-  const filled = [location, bird, month].filter(v => v && v.length > 0).length;
-  if (filled < 2) {
-    statusEl.textContent = "Please enter at least 2 of: location, bird, month.";
+  if (!location || !month) {
+    statusEl.textContent = "Please enter a town and pick a month.";
     return;
   }
 
@@ -40,17 +38,17 @@ form.addEventListener("submit", async (e) => {
   resultsCard.hidden = true;
 
   try {
-    const res = await fetch("https://solitary-resonance-e0f8.lkopferschmitt-e89.workers.dev/api/planner", {
+    const res = await fetch(API_PLANNER, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ location, bird, month: month ? Number(month) : null })
+      body: JSON.stringify({ location, month })
     });
 
     const text = await res.text();
     let data;
     try { data = JSON.parse(text); } catch { data = null; }
 
-    if (!res.ok) {
+    if (!res.ok || !data) {
       statusEl.textContent = (data && data.error) ? data.error : `Error (${res.status})`;
       setBusy(false);
       return;
@@ -73,42 +71,33 @@ function setBusy(isBusy) {
 }
 
 function renderResults(data) {
-  // Summary
-  const parts = [];
-  if (data.query?.birdLabel) parts.push(`<strong>${escapeHtml(data.query.birdLabel)}</strong>`);
-  if (data.query?.locationLabel) parts.push(`near <strong>${escapeHtml(data.query.locationLabel)}</strong>`);
-  summaryEl.innerHTML = parts.length ? `Planning for ${parts.join(" ")}.` : `Trip planner results.`;
+  const q = data.query || {};
+  const m = data.query?.month || null;
 
-  // Bars
-  monthBarsEl.innerHTML = "";
-  const series = data.monthSeries || [];
-  const max = Math.max(...series.map(x => x.count), 1);
+  summaryEl.innerHTML = `For <strong>${escapeHtml(q.locationLabel || q.locationInput || "your town")}</strong> in <strong>${MONTH_NAMES[m] || "that month"}</strong>.`;
 
-  for (const m of series) {
-    const row = document.createElement("div");
-    row.className = "bar";
+  // List
+  birdListEl.innerHTML = "";
+  const birds = Array.isArray(data.topBirds) ? data.topBirds : [];
 
-    const name = document.createElement("div");
-    name.className = "name";
-    name.textContent = MONTH_NAMES[m.month] || `Month ${m.month}`;
+  if (!birds.length) {
+    const li = document.createElement("li");
+    li.textContent = "No results found for that month nearby. Try widening your location (nearby bigger town) or another month.";
+    birdListEl.appendChild(li);
+  } else {
+    for (const b of birds) {
+      const li = document.createElement("li");
+      const main = document.createElement("div");
+      main.textContent = b.name || b.scientificName || "Unknown bird";
 
-    const track = document.createElement("div");
-    track.className = "track";
+      const sub = document.createElement("span");
+      sub.className = "small";
+      sub.textContent = `${b.count} records`;
 
-    const fill = document.createElement("div");
-    fill.className = "fill";
-    fill.style.width = `${Math.round((m.count / max) * 100)}%`;
-    track.appendChild(fill);
-
-    const val = document.createElement("div");
-    val.className = "val";
-    val.textContent = String(m.count);
-
-    row.appendChild(name);
-    row.appendChild(track);
-    row.appendChild(val);
-
-    monthBarsEl.appendChild(row);
+      li.appendChild(main);
+      li.appendChild(sub);
+      birdListEl.appendChild(li);
+    }
   }
 
   const yearsBack = data.meta?.yearsBack ?? 2;
@@ -117,52 +106,20 @@ function renderResults(data) {
   const widened = !!data.meta?.radiusWidened;
   const total = Number.isFinite(data.meta?.gbifTotalCount) ? data.meta.gbifTotalCount : null;
 
-  const widenedNote = widened
-    ? ` We widened the search to ~${actualMiles} miles because data within ${requestedMiles} miles was sparse.`
-    : "";
-
-  const totalNote = (total !== null)
-    ? ` (${total} total records matched.)`
-    : "";
-
   dataNoteEl.textContent =
-    `Counts are GBIF occurrence records in the last ${yearsBack} years within ~${actualMiles} miles of the town.${totalNote}${widenedNote}`;
+    `GBIF records from the last ${yearsBack} years within ~${actualMiles} miles.${total !== null ? ` (${total} total records matched.)` : ""}` +
+    (widened ? ` Widened from ${requestedMiles} miles due to sparse data.` : "");
 
-  // Selected month detail
-  if (data.selectedMonth) {
-    monthDetailSection.hidden = false;
-    const sm = data.selectedMonth;
-    monthDetailEl.innerHTML = `
-      <div><strong>${MONTH_NAMES[sm.month]}</strong> ranks <strong>#${sm.rank}</strong> of 12 for this bird near this town.</div>
-      <div class="tiny muted" style="margin-top:6px;">
-        ${sm.count} records vs peak month ${MONTH_NAMES[sm.peakMonth]} (${sm.peakCount} records).
-      </div>
-    `;
-  } else {
-    monthDetailSection.hidden = true;
-    monthDetailEl.innerHTML = "";
-  }
-
-  // Explanation
+  // Notes
   explainEl.innerHTML = "";
   const bullets = [
-    "This is a planning signal, not a guarantee — observer coverage varies by season and place.",
-    "For best odds, aim for the top 1–3 months and focus on nearby reserves/headlands within a short drive.",
-    "If you add exact dates later, we can estimate the best week and suggest nearby hotspots."
+    "This is a planning signal, not a guarantee — coverage varies and some birds are under-reported.",
+    "Use the list to pick habitats nearby (coast, harbour, lochs, farmland, moor) and you’ll improve your odds.",
+    "If results look thin, try a nearby larger town or a neighbouring month."
   ];
-
-  if (data.topMonths && data.topMonths.length) {
-    const tm = data.topMonths.map(m => MONTH_NAMES[m]).join(", ");
-    bullets.unshift(`Best months from the last ${yearsBack} years: ${tm}.`);
-  }
-
-  if (widened) {
-    bullets.unshift(`Data was sparse within ${requestedMiles} miles, so we widened to ${actualMiles} miles to get a more reliable signal.`);
-  }
-
-  for (const b of bullets) {
+  for (const t of bullets) {
     const li = document.createElement("li");
-    li.textContent = b;
+    li.textContent = t;
     explainEl.appendChild(li);
   }
 }
