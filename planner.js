@@ -107,8 +107,15 @@ function renderResults(data) {
   const total = Number.isFinite(data.meta?.gbifTotalCount) ? data.meta.gbifTotalCount : null;
 
   dataNoteEl.textContent =
-    `GBIF records from the last ${yearsBack} years within ~${actualMiles} miles.${total !== null ? ` (${total} total records matched.)` : ""}` +
-    (widened ? ` Widened from ${requestedMiles} miles due to sparse data.` : "");
+    const yearsBack = data.meta?.yearsBack ?? 2;
+const actualMiles = data.meta?.actualRadiusMiles ?? 20;
+const widened = !!data.meta?.radiusWidened;
+const rows = Number.isFinite(data.meta?.totalObservationRows) ? data.meta.totalObservationRows : null;
+
+dataNoteEl.textContent =
+  `eBird historic samples from the last ${yearsBack} years within ~${actualMiles} miles.` +
+  (rows !== null ? ` (${rows} observation rows across sampled days.)` : "") +
+  (widened ? ` Widened due to sparse data.` : "");
 
   // Notes
   explainEl.innerHTML = "";
