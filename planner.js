@@ -40,7 +40,7 @@ form.addEventListener("submit", async (e) => {
   resultsCard.hidden = true;
 
   try {
-    const res = await fetch("/api/planner", {
+    const res = await fetch("https://solitary-resonance-e0f8.lkopferschmitt-e89.workers.dev/api/planner", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ location, bird, month: month ? Number(month) : null })
