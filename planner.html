@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>Field Notes — Trip Planner</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Same styling approach as your notebook/dot-grid -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -13,7 +11,7 @@
     <header class="header">
       <div>
         <h1>Field Notes</h1>
-        <p class="subtitle">Birding trip planner — best places and best times</p>
+        <p class="subtitle">Birding trip planner — what might you see?</p>
       </div>
 
       <nav class="nav">
@@ -25,29 +23,22 @@
     <section class="card">
       <h2>Plan a trip</h2>
       <p class="muted">
-        Enter at least <strong>2</strong> of: location, bird, month. (Month is optional — if you leave it blank, we’ll suggest the best months.)
+        Enter a <strong>town</strong> and a <strong>month</strong>. We’ll show likely birds based on the last 2 years of records nearby.
       </p>
 
       <form id="plannerForm" class="form" autocomplete="off">
-        <label class="label" for="location">Location</label>
+        <label class="label" for="location">Town</label>
         <input
           id="location"
           name="location"
           class="input"
-          placeholder="e.g., North East Scotland, Aberdeen, Stonehaven"
+          placeholder="e.g., Thurso, Wick, Stonehaven"
+          required
         />
 
-        <label class="label" for="bird">Bird</label>
-        <input
-          id="bird"
-          name="bird"
-          class="input"
-          placeholder="e.g., Puffin, White-tailed Eagle, Snow Bunting"
-        />
-
-        <label class="label" for="month">Month (optional)</label>
-        <select id="month" name="month" class="input">
-          <option value="">Suggest best months</option>
+        <label class="label" for="month">Month</label>
+        <select id="month" name="month" class="input" required>
+          <option value="" disabled selected>Select month</option>
           <option value="1">January</option>
           <option value="2">February</option>
           <option value="3">March</option>
@@ -72,23 +63,18 @@
     </section>
 
     <section class="card" id="resultsCard" hidden>
-      <h2>Results</h2>
+      <h2>Likely birds</h2>
 
       <div id="summary" class="summary"></div>
 
       <div class="section">
-        <h3>Best months</h3>
-        <div id="monthBars" class="bars" aria-label="Monthly likelihood"></div>
+        <h3>Top birds</h3>
+        <ol id="birdList" class="ranked"></ol>
         <p class="muted tiny" id="dataNote"></p>
       </div>
 
-      <div class="section" id="monthDetailSection" hidden>
-        <h3>Your selected month</h3>
-        <div id="monthDetail" class="callout"></div>
-      </div>
-
       <div class="section">
-        <h3>What this means</h3>
+        <h3>Notes</h3>
         <ul class="bullets" id="explain"></ul>
       </div>
     </section>
@@ -100,6 +86,6 @@
     </footer>
   </main>
 
-  <script src="planner.js"></script>
+  <script src="planner.js?v=3"></script>
 </body>
 </html>
